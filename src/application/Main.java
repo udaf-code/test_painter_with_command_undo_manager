@@ -17,9 +17,11 @@ import java.util.List;
 
 public class Main extends Application {
 
-    private final List<Stroke> model = new ArrayList<>(); // модель — список штрихов
+    //private final List<Stroke> model = new ArrayList<>(); // модель — список штрихов
+    private final List<Drawable> model = new ArrayList<>();
     private final UndoManager undoManager = new UndoManager(100);
     private Stroke currentStroke = null;
+    private Line currentLine = null;
 
     private Canvas canvas;
     private GraphicsContext gc;
@@ -68,7 +70,8 @@ public class Main extends Application {
                 currentStroke.addPoint(e.getX(), e.getY());
         	}
         	else if (currentTool == Tool.Line) {
-        		
+        		currentLine = new Line(Color.BLACK, 2.0);
+        		currentLine.addPoint(e.getX(), e.getY());
         	}
             
         });
@@ -82,6 +85,11 @@ public class Main extends Application {
 	            }
         	}
 			else if (currentTool == Tool.Line) {
+				if (currentLine != null) {
+					currentLine.addPoint(e.getX(), e.getY());
+					redraw();
+					drawLine(currentLine);
+				}
 			}
         	
         });
@@ -99,6 +107,15 @@ public class Main extends Application {
 	            }
         	}
         	else if (currentTool == Tool.Line) {
+        		if (currentLine != null) {
+					currentLine.addPoint(e.getX(), e.getY());
+					// Создаём команду и выполняем её через UndoManager
+					DrawLineCommand cmd = new DrawLineCommand(model, currentLine);
+	                undoManager.doCommand(cmd);
+	                currentLine = null;
+					redraw();
+					drawLine(currentLine);
+				}
 			}
         });
 
@@ -126,16 +143,40 @@ public class Main extends Application {
         undoBtn.setDisable(!undoManager.canUndo());
         redoBtn.setDisable(!undoManager.canRedo());
     }
-
+    // добавить рисовку линий
+    private void drawLine(Line l) {
+    	List<Double> ptl = l.getPoints();
+    	int size = ptl.size();
+        if (ptl.size() < 4) return;
+        gc.setStroke(l.getColor());
+        gc.setLineWidth(l.getWidth());
+        gc.beginPath();
+        gc.moveTo(ptl.get(0), ptl.get(1));
+//        for (int i = 2; i < ptl.size(); i += 2) {
+//            gc.lineTo(ptl.get(i), ptl.get(i + 1));
+//        }
+        gc.lineTo(ptl.get(size-2), ptl.get(size-1));
+        gc.stroke();
+    }
+    // рисовать всю модель из штрихов
+    // сделать чтобы рисовалась модель из штрихов и прямых линий
     private void redraw() {
         gc.setFill(Color.WHITE);
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        for (Stroke s : model) {
-            drawStroke(s);
+        for (Drawable d : model) {
+            if (d instanceof Stroke) {
+                Stroke stroke = (Stroke) d;
+                drawStroke(stroke);
+            }
+            if (d instanceof Line) {
+                Line line = (Line) d;
+                drawLine(line);
+            }
         }
-    }
 
+    }
+    // рисовать штрихи
     private void drawStroke(Stroke s) {
         List<Double> pts = s.getPoints();
         if (pts.size() < 4) return;

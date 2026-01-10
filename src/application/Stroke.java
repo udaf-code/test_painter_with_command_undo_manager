@@ -5,7 +5,7 @@ import javafx.scene.paint.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Stroke {
+public class Stroke extends DrawableBase{
     private final List<Double> points = new ArrayList<>(); // x0,y0,x1,y1,...
     private final Color color;
     private final double width;

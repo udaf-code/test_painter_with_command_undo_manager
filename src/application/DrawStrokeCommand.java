@@ -3,10 +3,11 @@ package application;
 import java.util.List;
 
 public class DrawStrokeCommand implements Command {
-    private final List<Stroke> model;
+	// общая модель <Drawable>
+    private final List<Drawable> model;
     private final Stroke stroke;
 
-    public DrawStrokeCommand(List<Stroke> model, Stroke stroke) {
+    public DrawStrokeCommand(List<Drawable> model, Stroke stroke) {
         // ВАЖНО: клонировать данные штриха, чтобы последующие изменения не ломали историю
         this.model = model;
         this.stroke = stroke.copy();

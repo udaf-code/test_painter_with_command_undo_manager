@@ -5,7 +5,8 @@ import java.util.List;
 
 import javafx.scene.paint.Color;
 
-public class Line {
+public class Line extends DrawableBase{
+	private final List<Double> points = new ArrayList<>();
 	private final Color color;
 	private final double width;
     public Line(Color color, double width) {
@@ -17,7 +18,10 @@ public class Line {
         points.add(x);
         points.add(y);
     }
-    private final List<Double> points = new ArrayList<>();
+    public List<Double> getPoints() {
+        return points;
+    }
+    
     
     public Color getColor() {
         return color;
