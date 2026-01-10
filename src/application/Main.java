@@ -23,20 +23,30 @@ public class Main extends Application {
 
     private Canvas canvas;
     private GraphicsContext gc;
+    
+    private enum Tool { Stroke, Line};
+    private Tool currentTool = Tool.Stroke;
 
     @Override
     public void start(Stage primaryStage) {
         canvas = new Canvas(800, 600);
         gc = canvas.getGraphicsContext2D();
         redraw();
+        
 
         // Панель управления
+        Button strokeBtn = new Button("Stroke");
+        Button lineBtn = new Button("Line");
         Button undoBtn = new Button("Undo");
         Button redoBtn = new Button("Redo");
         undoBtn.setOnAction(e -> {
-            undoManager.undo();
-            redraw();
-            updateButtons(undoBtn, redoBtn);
+           
+        });
+        strokeBtn.setOnAction(e -> {
+            currentTool = Tool.Stroke;
+        });
+        lineBtn.setOnAction(e -> {
+        	currentTool = Tool.Line;
         });
         redoBtn.setOnAction(e -> {
             undoManager.redo();
@@ -45,7 +55,7 @@ public class Main extends Application {
         });
         updateButtons(undoBtn, redoBtn);
 
-        HBox controls = new HBox(5, undoBtn, redoBtn);
+        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn);
 
         BorderPane root = new BorderPane();
         root.setTop(controls);
@@ -53,28 +63,43 @@ public class Main extends Application {
 
         // Mouse handlers
         canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
-            currentStroke = new Stroke(Color.BLACK, 2.0);
-            currentStroke.addPoint(e.getX(), e.getY());
+        	if (currentTool == Tool.Stroke) {
+        		currentStroke = new Stroke(Color.BLACK, 2.0);
+                currentStroke.addPoint(e.getX(), e.getY());
+        	}
+        	else if (currentTool == Tool.Line) {
+        		
+        	}
+            
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
-            if (currentStroke != null) {
-                currentStroke.addPoint(e.getX(), e.getY());
-                redraw(); // перерисовываем всё модель + текущий черновик
-                drawStroke(currentStroke);
-            }
+        	if (currentTool == Tool.Stroke) {
+	            if (currentStroke != null) {
+	                currentStroke.addPoint(e.getX(), e.getY());
+	                redraw(); // перерисовываем всё модель + текущий черновик
+	                drawStroke(currentStroke);
+	            }
+        	}
+			else if (currentTool == Tool.Line) {
+			}
+        	
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
-            if (currentStroke != null) {
-                currentStroke.addPoint(e.getX(), e.getY());
-                // Создаём команду и выполняем её через UndoManager
-                DrawStrokeCommand cmd = new DrawStrokeCommand(model, currentStroke);
-                undoManager.doCommand(cmd);
-                currentStroke = null;
-                redraw();
-                updateButtons(undoBtn, redoBtn);
-            }
+        	if (currentTool == Tool.Stroke) {
+	            if (currentStroke != null) {
+	                currentStroke.addPoint(e.getX(), e.getY());
+	                // Создаём команду и выполняем её через UndoManager
+	                DrawStrokeCommand cmd = new DrawStrokeCommand(model, currentStroke);
+	                undoManager.doCommand(cmd);
+	                currentStroke = null;
+	                redraw();
+	                updateButtons(undoBtn, redoBtn);
+	            }
+        	}
+        	else if (currentTool == Tool.Line) {
+			}
         });
 
         Scene scene = new Scene(root);
