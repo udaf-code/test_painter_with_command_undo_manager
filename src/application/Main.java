@@ -50,6 +50,11 @@ public class Main extends Application {
         lineBtn.setOnAction(e -> {
         	currentTool = Tool.Line;
         });
+        undoBtn.setOnAction(e -> {
+            undoManager.undo();
+            redraw();
+            updateButtons(undoBtn, redoBtn);
+        });
         redoBtn.setOnAction(e -> {
             undoManager.redo();
             redraw();
@@ -114,7 +119,8 @@ public class Main extends Application {
 	                undoManager.doCommand(cmd);
 	                currentLine = null;
 					redraw();
-					drawLine(currentLine);
+					updateButtons(undoBtn, redoBtn);
+					//drawLine(currentLine);
 				}
 			}
         });
@@ -145,6 +151,7 @@ public class Main extends Application {
     }
     // добавить рисовку линий
     private void drawLine(Line l) {
+    	if (l == null) return;
     	List<Double> ptl = l.getPoints();
     	int size = ptl.size();
         if (ptl.size() < 4) return;
@@ -169,7 +176,7 @@ public class Main extends Application {
                 Stroke stroke = (Stroke) d;
                 drawStroke(stroke);
             }
-            if (d instanceof Line) {
+            else if (d instanceof Line) {
                 Line line = (Line) d;
                 drawLine(line);
             }

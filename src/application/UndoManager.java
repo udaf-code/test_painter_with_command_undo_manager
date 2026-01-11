@@ -21,9 +21,11 @@ public class UndoManager {
 
     public void undo() {
         if (!undoStack.isEmpty()) {
+        	
             Command cmd = undoStack.pop();
             cmd.undo();
             redoStack.push(cmd);
+            
         }
     }
 

@@ -10,7 +10,6 @@ public class Line extends DrawableBase{
 	private final Color color;
 	private final double width;
     public Line(Color color, double width) {
-		super();
 		this.color = color;
 		this.width = width;
 	}
