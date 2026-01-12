@@ -26,7 +26,7 @@ public class Main extends Application {
     private Canvas canvas;
     private GraphicsContext gc;
     
-    private enum Tool { Stroke, Line};
+    private enum Tool { Stroke, Line, Erase};
     private Tool currentTool = Tool.Stroke;
 
     @Override
@@ -39,6 +39,7 @@ public class Main extends Application {
         // Панель управления
         Button strokeBtn = new Button("Stroke");
         Button lineBtn = new Button("Line");
+        Button eraseBtn = new Button("Eraser");
         Button undoBtn = new Button("Undo");
         Button redoBtn = new Button("Redo");
         undoBtn.setOnAction(e -> {
@@ -49,6 +50,9 @@ public class Main extends Application {
         });
         lineBtn.setOnAction(e -> {
         	currentTool = Tool.Line;
+        });
+        eraseBtn.setOnAction(e -> {
+        	currentTool = Tool.Erase;
         });
         undoBtn.setOnAction(e -> {
             undoManager.undo();
@@ -78,6 +82,9 @@ public class Main extends Application {
         		currentLine = new Line(Color.BLACK, 2.0);
         		currentLine.addPoint(e.getX(), e.getY());
         	}
+        	else if (currentTool == Tool.Erase) {
+        		
+        	}
             
         });
 
@@ -95,6 +102,9 @@ public class Main extends Application {
 					redraw();
 					drawLine(currentLine);
 				}
+			}
+			else if (currentTool == Tool.Erase) {
+			        		
 			}
         	
         });
@@ -195,6 +205,11 @@ public class Main extends Application {
             gc.lineTo(pts.get(i), pts.get(i + 1));
         }
         gc.stroke();
+    }
+    // стирание
+    private void eraseAt(double x, double y) {
+    	final double ERASER_SIZE = 10;
+    	gc.clearRect(x - ERASER_SIZE / 2, y - ERASER_SIZE / 2, ERASER_SIZE, ERASER_SIZE);
     }
 
     public static void main(String[] args) {
