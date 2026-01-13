@@ -22,6 +22,7 @@ public class Main extends Application {
     private final UndoManager undoManager = new UndoManager(100);
     private Stroke currentStroke = null;
     private Line currentLine = null;
+    private Erase currentErase = null;
 
     private Canvas canvas;
     private GraphicsContext gc;
@@ -66,7 +67,7 @@ public class Main extends Application {
         });
         updateButtons(undoBtn, redoBtn);
 
-        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn);
+        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn, eraseBtn);
 
         BorderPane root = new BorderPane();
         root.setTop(controls);
@@ -83,7 +84,9 @@ public class Main extends Application {
         		currentLine.addPoint(e.getX(), e.getY());
         	}
         	else if (currentTool == Tool.Erase) {
-        		
+        		currentErase = new Erase();
+        		currentErase.addPoint(e.getX(), e.getY());
+        		//eraseAt(e.getX(), e.getY());
         	}
             
         });
@@ -104,10 +107,15 @@ public class Main extends Application {
 				}
 			}
 			else if (currentTool == Tool.Erase) {
-			        		
+				if (currentErase != null) {
+					currentErase.addPoint(e.getX(), e.getY());
+					redraw();
+					drawErase(currentErase);
+				//eraseAt(e.getX(), e.getY());  		
+				}
 			}
-        	
         });
+        
 
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
         	if (currentTool == Tool.Stroke) {
@@ -190,6 +198,10 @@ public class Main extends Application {
                 Line line = (Line) d;
                 drawLine(line);
             }
+            else if (d instanceof Erase) {
+                Erase eraser = (Erase) d;
+                drawErase(eraser);
+            }
         }
 
     }
@@ -210,6 +222,16 @@ public class Main extends Application {
     private void eraseAt(double x, double y) {
     	final double ERASER_SIZE = 10;
     	gc.clearRect(x - ERASER_SIZE / 2, y - ERASER_SIZE / 2, ERASER_SIZE, ERASER_SIZE);
+    }
+    private void drawErase(Erase e) {
+        List<Double> pts = e.getPoints();
+        if (pts.size() < 4) return;
+        gc.beginPath();
+        gc.moveTo(pts.get(0), pts.get(1));
+        for (int i = 2; i < pts.size(); i += 2) {
+            eraseAt(pts.get(i), pts.get(i + 1));
+        }
+        gc.stroke();
     }
 
     public static void main(String[] args) {
