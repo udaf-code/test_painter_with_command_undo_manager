@@ -23,11 +23,12 @@ public class Main extends Application {
     private Stroke currentStroke = null;
     private Line currentLine = null;
     private Erase currentErase = null;
+    private Circle currentCircle = null;
 
     private Canvas canvas;
     private GraphicsContext gc;
     
-    private enum Tool { Stroke, Line, Erase};
+    private enum Tool { Stroke, Line, Erase, Circle};
     private Tool currentTool = Tool.Stroke;
 
     @Override
@@ -41,6 +42,7 @@ public class Main extends Application {
         Button strokeBtn = new Button("Stroke");
         Button lineBtn = new Button("Line");
         Button eraseBtn = new Button("Eraser");
+        Button circleBtn = new Button("Circle");
         Button undoBtn = new Button("Undo");
         Button redoBtn = new Button("Redo");
         undoBtn.setOnAction(e -> {
@@ -55,6 +57,9 @@ public class Main extends Application {
         eraseBtn.setOnAction(e -> {
         	currentTool = Tool.Erase;
         });
+        circleBtn.setOnAction(e -> {
+        	currentTool = Tool.Circle;
+        });
         undoBtn.setOnAction(e -> {
             undoManager.undo();
             redraw();
@@ -67,7 +72,7 @@ public class Main extends Application {
         });
         updateButtons(undoBtn, redoBtn);
 
-        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn, eraseBtn);
+        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn, eraseBtn, circleBtn);
 
         BorderPane root = new BorderPane();
         root.setTop(controls);
@@ -87,6 +92,10 @@ public class Main extends Application {
         		currentErase = new Erase();
         		currentErase.addPoint(e.getX(), e.getY());
         		//eraseAt(e.getX(), e.getY());
+        	}
+        	else if (currentTool == Tool.Circle) {
+        		currentCircle = new Circle(Color.BLACK, 2.0);
+        		currentCircle.addPoint(e.getX(), e.getY());
         	}
             
         });
@@ -113,6 +122,9 @@ public class Main extends Application {
 					drawErase(currentErase);
 				//eraseAt(e.getX(), e.getY());  		
 				}
+			}
+			else if (currentTool == Tool.Circle) {
+				
 			}
         });
         
@@ -141,6 +153,18 @@ public class Main extends Application {
 					//drawLine(currentLine);
 				}
 			}
+        	else if (currentTool == Tool.Erase) {
+        		if (currentErase != null) {
+        			DrawEraseCommand cmd = new DrawEraseCommand(model, currentErase);
+        			undoManager.doCommand(cmd);
+        			currentErase = null;
+        			redraw();
+					updateButtons(undoBtn, redoBtn);
+        		}
+        	}
+        	else if (currentTool == Tool.Circle) {
+        		
+        	}
         });
 
         Scene scene = new Scene(root);
