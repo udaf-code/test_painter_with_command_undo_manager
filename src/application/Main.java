@@ -24,11 +24,12 @@ public class Main extends Application {
     private Line currentLine = null;
     private Erase currentErase = null;
     private Circle currentCircle = null;
+    private Rect currentRect = null;
 
     private Canvas canvas;
     private GraphicsContext gc;
     
-    private enum Tool { Stroke, Line, Erase, Circle};
+    private enum Tool { Stroke, Line, Erase, Circle, Rect};
     private Tool currentTool = Tool.Stroke;
 
     @Override
@@ -43,6 +44,7 @@ public class Main extends Application {
         Button lineBtn = new Button("Line");
         Button eraseBtn = new Button("Eraser");
         Button circleBtn = new Button("Circle");
+        Button rectBtn = new Button("Rect");
         Button undoBtn = new Button("Undo");
         Button redoBtn = new Button("Redo");
         undoBtn.setOnAction(e -> {
@@ -60,6 +62,9 @@ public class Main extends Application {
         circleBtn.setOnAction(e -> {
         	currentTool = Tool.Circle;
         });
+        rectBtn.setOnAction(e -> {
+        	currentTool = Tool.Rect;
+        });
         undoBtn.setOnAction(e -> {
             undoManager.undo();
             redraw();
@@ -72,7 +77,7 @@ public class Main extends Application {
         });
         updateButtons(undoBtn, redoBtn);
 
-        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn, eraseBtn, circleBtn);
+        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn, eraseBtn, circleBtn, rectBtn);
 
         BorderPane root = new BorderPane();
         root.setTop(controls);
@@ -96,6 +101,10 @@ public class Main extends Application {
         	else if (currentTool == Tool.Circle) {
         		currentCircle = new Circle(Color.BLACK, 2.0);
         		currentCircle.addPoint(e.getX(), e.getY());
+        	}
+        	else if (currentTool == Tool.Rect) {
+        		currentRect = new Rect(Color.BLACK, 2.0);
+        		currentRect.addPoint(e.getX(), e.getY());
         	}
             
         });
@@ -124,9 +133,20 @@ public class Main extends Application {
 				}
 			}
 			else if (currentTool == Tool.Circle) {
-				
+				if (currentCircle != null) {
+					currentCircle.addPoint(e.getX(), e.getY());
+					redraw();
+					drawCircle(currentCircle);		
+				}
 			}
-        });
+			else if (currentTool == Tool.Rect) {
+				if (currentRect != null) {
+					currentRect.addPoint(e.getX(), e.getY());
+					redraw();
+					drawRect(currentRect);		
+				}    		
+			}
+		});
         
 
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
@@ -163,8 +183,23 @@ public class Main extends Application {
         		}
         	}
         	else if (currentTool == Tool.Circle) {
-        		
+        		if (currentCircle != null) {
+        			DrawCircleCommand cmd = new DrawCircleCommand(model, currentCircle);
+        			undoManager.doCommand(cmd);
+        			currentCircle = null;
+        			redraw();
+					updateButtons(undoBtn, redoBtn);
+        		}
         	}
+			else if (currentTool == Tool.Rect) {
+				if (currentRect != null) {
+        			DrawRectCommand cmd = new DrawRectCommand(model, currentRect);
+        			undoManager.doCommand(cmd);
+        			currentRect = null;
+        			redraw();
+					updateButtons(undoBtn, redoBtn);
+        		}   		
+			}
         });
 
         Scene scene = new Scene(root);
@@ -190,6 +225,43 @@ public class Main extends Application {
     private void updateButtons(Button undoBtn, Button redoBtn) {
         undoBtn.setDisable(!undoManager.canUndo());
         redoBtn.setDisable(!undoManager.canRedo());
+    }
+    private void drawRect(Rect r) {
+    	if (r == null) return;
+    	List<Double> ptl = r.getPoints();
+    	int size = ptl.size();
+        if (ptl.size() < 4) return;
+        gc.setStroke(r.getColor());
+        gc.setLineWidth(r.getWidth());
+        gc.beginPath();
+        gc.moveTo(ptl.get(0), ptl.get(1));
+        double rx = Math.min(ptl.get(0), ptl.get(size-2));
+        double ry = Math.min(ptl.get(1), ptl.get(size-1));
+        double rw = Math.abs(ptl.get(size-2) - ptl.get(0));
+        double rh = Math.abs(ptl.get(size-1) - ptl.get(1));
+        //gc.strokeRect(rx, ry, rw, rh);
+        gc.strokeRect(rx, ry, rw, rh);
+    }
+    private void drawCircle(Circle c) {
+    	if (c == null) return;
+    	List<Double> ptl = c.getPoints();
+    	int size = ptl.size();
+        if (ptl.size() < 4) return;
+        gc.setStroke(c.getColor());
+        gc.setLineWidth(c.getWidth());
+        gc.beginPath();
+        gc.moveTo(ptl.get(0), ptl.get(1));
+        double rx = Math.min(ptl.get(0), ptl.get(size-2));
+        double ry = Math.min(ptl.get(1), ptl.get(size-1));
+        double rw = Math.abs(ptl.get(size-2) - ptl.get(0));
+        double rh = Math.abs(ptl.get(size-1) - ptl.get(1));
+        //gc.strokeRect(rx, ry, rw, rh);
+        gc.strokeOval(rx, ry, rw, rh);
+//        for (int i = 2; i < ptl.size(); i += 2) {
+//            gc.lineTo(ptl.get(i), ptl.get(i + 1));
+//        }
+        //gc.lineTo(ptl.get(size-2), ptl.get(size-1));
+        //gc.stroke();
     }
     // добавить рисовку линий
     private void drawLine(Line l) {
@@ -225,6 +297,14 @@ public class Main extends Application {
             else if (d instanceof Erase) {
                 Erase eraser = (Erase) d;
                 drawErase(eraser);
+            }
+            else if (d instanceof Circle) {
+                Circle circle = (Circle) d;
+                drawCircle(circle);
+            }
+            else if (d instanceof Rect) {
+                Rect rect =(Rect) d;
+                drawRect(rect);
             }
         }
 
