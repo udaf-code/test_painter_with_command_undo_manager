@@ -25,11 +25,12 @@ public class Main extends Application {
     private Erase currentErase = null;
     private Circle currentCircle = null;
     private Rect currentRect = null;
+    private Star currentStar = null;
 
     private Canvas canvas;
     private GraphicsContext gc;
     
-    private enum Tool { Stroke, Line, Erase, Circle, Rect};
+    private enum Tool { Stroke, Line, Erase, Circle, Rect, RotRect, Star};
     private Tool currentTool = Tool.Stroke;
 
     @Override
@@ -45,6 +46,8 @@ public class Main extends Application {
         Button eraseBtn = new Button("Eraser");
         Button circleBtn = new Button("Circle");
         Button rectBtn = new Button("Rect");
+        Button rotRectBtn = new Button("RotRect");
+        Button starBtn = new Button("Star");
         Button undoBtn = new Button("Undo");
         Button redoBtn = new Button("Redo");
         undoBtn.setOnAction(e -> {
@@ -65,6 +68,12 @@ public class Main extends Application {
         rectBtn.setOnAction(e -> {
         	currentTool = Tool.Rect;
         });
+        rotRectBtn.setOnAction(e -> {
+        	currentTool = Tool.RotRect;
+        });
+        starBtn.setOnAction(e -> {
+        	currentTool = Tool.Star;
+        });
         undoBtn.setOnAction(e -> {
             undoManager.undo();
             redraw();
@@ -77,7 +86,7 @@ public class Main extends Application {
         });
         updateButtons(undoBtn, redoBtn);
 
-        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn, eraseBtn, circleBtn, rectBtn);
+        HBox controls = new HBox(5, undoBtn, redoBtn, strokeBtn,lineBtn, eraseBtn, circleBtn, rectBtn, rotRectBtn, starBtn);
 
         BorderPane root = new BorderPane();
         root.setTop(controls);
@@ -105,6 +114,13 @@ public class Main extends Application {
         	else if (currentTool == Tool.Rect) {
         		currentRect = new Rect(Color.BLACK, 2.0);
         		currentRect.addPoint(e.getX(), e.getY());
+        	}
+        	else if (currentTool == Tool.Star) {
+        		currentStar = new Star(Color.BLACK, 2.0);
+        		currentStar.addPoint(e.getX(), e.getY());
+        	}
+        	else if (currentTool == Tool.RotRect) {
+        		
         	}
             
         });
@@ -146,6 +162,16 @@ public class Main extends Application {
 					drawRect(currentRect);		
 				}    		
 			}
+			else if (currentTool == Tool.Star) {
+				if (currentStar != null) {
+					currentStar.addPoint(e.getX(), e.getY());
+					redraw();
+					drawStar(currentStar); 	
+				}
+			}
+			else if (currentTool == Tool.RotRect) {
+        		
+        	}
 		});
         
 
@@ -200,6 +226,18 @@ public class Main extends Application {
 					updateButtons(undoBtn, redoBtn);
         		}   		
 			}
+			else if (currentTool == Tool.Star) {
+				if (currentStar != null) {
+        			DrawStarCommand cmd = new DrawStarCommand(model, currentStar);
+        			undoManager.doCommand(cmd);
+        			currentStar = null;
+        			redraw();
+					updateButtons(undoBtn, redoBtn);
+        		}     		
+			}
+			else if (currentTool == Tool.RotRect) {
+        		
+        	}
         });
 
         Scene scene = new Scene(root);
@@ -225,6 +263,45 @@ public class Main extends Application {
     private void updateButtons(Button undoBtn, Button redoBtn) {
         undoBtn.setDisable(!undoManager.canUndo());
         redoBtn.setDisable(!undoManager.canRedo());
+    }
+    private void drawStar(Star s) {
+    	if (s == null) return;
+    	List<Double> ptl = s.getPoints();
+    	int size = ptl.size();
+        if (ptl.size() < 4) return;
+        gc.setStroke(s.getColor());
+        gc.setLineWidth(s.getWidth());
+        //gc.beginPath();
+        //gc.moveTo(ptl.get(0), ptl.get(1));
+        double rx = Math.min(ptl.get(0), ptl.get(size-2));
+        double ry = Math.min(ptl.get(1), ptl.get(size-1));
+        double rw = Math.abs(ptl.get(size-2) - ptl.get(0));
+        double rh = Math.abs(ptl.get(size-1) - ptl.get(1));
+        //gc.strokeRect(rx, ry, rw, rh);
+        //gc.strokeRect(rx, ry, rw, rh);
+     // центр и внешний радиус (по меньшей стороне прямоугольника)
+        double cx = rx + rw / 2.0;
+        double cy = ry + rh / 2.0;
+        double outerRadius = Math.min(rw, rh) / 2.0;
+        // внутренний радиус задаём как долю внешнего (0.4-0.5 обычно хорошо)
+        double innerRadius = outerRadius * 0.5;
+
+        // количество вершин: 5-конечная звезда -> 10 точек чередующихся
+        int points = 10;
+        double[] xs = new double[points];
+        double[] ys = new double[points];
+
+        // смещение угла так, чтобы один луч смотрел вверх (можно изменить)
+        double startAngle = -Math.PI / 2.0; // вверх
+        for (int i = 0; i < points; i++) {
+            double angle = startAngle + i * (2 * Math.PI / points);
+            double r = (i % 2 == 0) ? outerRadius : innerRadius;
+            xs[i] = cx + Math.cos(angle) * r;
+            ys[i] = cy + Math.sin(angle) * r;
+        }
+
+        // рисуем замкнутый контур
+        gc.strokePolygon(xs, ys, points);
     }
     private void drawRect(Rect r) {
     	if (r == null) return;
@@ -305,6 +382,10 @@ public class Main extends Application {
             else if (d instanceof Rect) {
                 Rect rect =(Rect) d;
                 drawRect(rect);
+            }
+            else if (d instanceof Star) {
+                Star star =(Star) d;
+                drawStar(star);
             }
         }
 

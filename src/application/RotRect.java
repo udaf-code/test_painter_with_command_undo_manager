@@ -5,11 +5,11 @@ import java.util.List;
 
 import javafx.scene.paint.Color;
 
-public class Star extends DrawableBase{
+public class RotRect extends DrawableBase{
 	private final List<Double> points = new ArrayList<>();
 	private final Color color;
 	private final double width;
-	public Star(Color color, double width) {
+	public RotRect(Color color, double width) {
 		this.color = color;
 		this.width = width;
 	}

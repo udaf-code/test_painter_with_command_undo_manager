@@ -2,24 +2,24 @@ package application;
 
 import java.util.List;
 
-public class DrawStarCommand implements Command{
+public class DrawRotRectCommand implements Command{
 	// общая модель <Drawable>
     private final List<Drawable> model;
-    private final Star star;
+    private final RotRect rotRect;
 
-    public DrawStarCommand(List<Drawable> model, Star star) {
+    public DrawRotRectCommand(List<Drawable> model, RotRect rotRect) {
         // ВАЖНО: клонировать данные штриха, чтобы последующие изменения не ломали историю
         this.model = model;
-        this.star = star;
+        this.rotRect = rotRect;
     }
 
     @Override
     public void execute() {
-        model.add(star);
+        model.add(rotRect);
     }
 
     @Override
     public void undo() {
-        model.remove(star);
+        model.remove(rotRect);
     }
 }
