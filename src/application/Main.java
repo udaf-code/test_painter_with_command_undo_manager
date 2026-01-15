@@ -26,6 +26,7 @@ public class Main extends Application {
     private Circle currentCircle = null;
     private Rect currentRect = null;
     private Star currentStar = null;
+    private RotRect currentRotRect = null;
 
     private Canvas canvas;
     private GraphicsContext gc;
@@ -120,7 +121,8 @@ public class Main extends Application {
         		currentStar.addPoint(e.getX(), e.getY());
         	}
         	else if (currentTool == Tool.RotRect) {
-        		
+        		currentRotRect = new RotRect(Color.BLACK, 2.0);
+        		currentRotRect.addPoint(e.getX(), e.getY());
         	}
             
         });
@@ -170,7 +172,11 @@ public class Main extends Application {
 				}
 			}
 			else if (currentTool == Tool.RotRect) {
-        		
+				if (currentRotRect != null) {
+					currentRotRect.addPoint(e.getX(), e.getY());
+					redraw();
+					drawRotRect(currentRotRect); 	
+				}
         	}
 		});
         
@@ -236,7 +242,13 @@ public class Main extends Application {
         		}     		
 			}
 			else if (currentTool == Tool.RotRect) {
-        		
+				if (currentRotRect != null) {
+        			DrawRotRectCommand cmd = new DrawRotRectCommand(model, currentRotRect);
+        			undoManager.doCommand(cmd);
+        			currentRotRect = null;
+        			redraw();
+					updateButtons(undoBtn, redoBtn);
+        		} 
         	}
         });
 
@@ -302,6 +314,37 @@ public class Main extends Application {
 
         // рисуем замкнутый контур
         gc.strokePolygon(xs, ys, points);
+    }
+
+    private void drawRotRect(RotRect rr) {
+        if (rr == null) return;
+        List<Double> ptl = rr.getPoints();
+        int size = ptl.size();
+        if (size < 4) return;
+
+        gc.save(); // важно сохранить состояние перед трансформациями
+
+        gc.setStroke(rr.getColor());
+        gc.setLineWidth(rr.getWidth());
+
+        double sx = ptl.get(0);
+        double sy = ptl.get(1);
+        double cx = ptl.get(size - 2);
+        double cy = ptl.get(size - 1);
+
+        double rx = Math.min(sx, cx);
+        double ry = Math.min(sy, cy);
+        double rw = Math.abs(cx - sx);
+        double rh = Math.abs(cy - sy);
+        double centerX = rx + rw / 2.0;
+        double centerY = ry + rh / 2.0;
+        double angle = Math.atan2(cy - sy, cx - sx);
+
+        gc.translate(centerX, centerY);
+        gc.rotate(Math.toDegrees(angle));
+        gc.strokeRect(-rw / 2.0, -rh / 2.0, rw, rh);
+
+        gc.restore(); // вернуть предыдущее состояние
     }
     private void drawRect(Rect r) {
     	if (r == null) return;
@@ -386,6 +429,10 @@ public class Main extends Application {
             else if (d instanceof Star) {
                 Star star =(Star) d;
                 drawStar(star);
+            }
+            else if (d instanceof RotRect) {
+                RotRect rotRect =(RotRect) d;
+                drawRotRect(rotRect);
             }
         }
 
